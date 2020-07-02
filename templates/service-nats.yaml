@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "teamshell-nats-server.fullname" . }}
+  labels:
+    {{- include "teamshell-nats-server.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.serviceNats.type }}
+  ports:
+    - port: {{ .Values.serviceNats.port }}
+      targetPort: {{ .Values.serviceNats.port }}
+      nodePort: {{ .Values.serviceNats.nodePort}}
+  selector:
+    {{- include "teamshell-nats-server.selectorLabels" . | nindent 4 }}

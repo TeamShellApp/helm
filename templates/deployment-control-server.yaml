@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "teamshell-server.fullname" . }}
+  labels:
+    {{- include "teamshell-server.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.controlServer.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "teamshell-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "teamshell-server.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "teamshell-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.imageControlServer.repository }}:{{ .Values.imageControlServer.tag | default `latest` }}"
+          imagePullPolicy: {{ .Values.imageControlServer.pullPolicy }}
+          env:
+            - name: DB_USER
+              value: {{ .Values.controlServer.pgUser }}
+            - name: DB_PASSWORD
+              value: {{ .Values.controlServer.pgPassword }}
+            - name: DB_HOST
+              {{ if eq .Values.controlServer.pgHost "" }}
+              value: {{ .Release.Name }}-{{ .Values.postgresql.nameOverride}}
+              {{else}}
+              value: {{ .Values.controlServer.pgHost }}
+              {{end}}
+            - name: DB_PORT
+              value: {{ .Values.controlServer.pgPort | quote }}
+            - name: DB_NAME
+              value: {{ .Values.controlServer.pgDatabase }}
+            - name: DB_SSL
+              value: {{ .Values.controlServer.pgSSL }}
+            - name: CERT_PROD
+              value: {{ .Values.controlServer.useCert | quote }}
+            - name: ENABLE_RBAC
+              value: {{ .Values.controlServer.enableRBAC | quote }}
+            - name: STORAGE_TOKEN
+              value: {{ .Values.controlServer.storageToken }}
+            - name: EVENTS_TOKEN
+              value: {{ .Values.controlServer.eventsToken }}
+            - name: SMTP_HOST
+              value: {{ .Values.controlServer.smtpHost }}
+            - name: SMTP_PORT
+              value: {{ .Values.controlServer.smtpPort | quote }}
+            - name: SMTP_USER
+              value: {{ .Values.controlServer.smtpUser }}
+            - name: SMTP_PASSWORD
+              value: {{ .Values.controlServer.smtpPassword }}
+            - name: SMTP_FROM_EMAIL
+              value: {{ .Values.controlServer.smtpFromEmail }}
+            - name: SMTP_FROM_NAME
+              value: {{ .Values.controlServer.smtpFromName }}
+            - name: SENTRY_DSN
+              value: {{ .Values.controlServer.sentryDSN }}
+          ports:
+            - name: grpc
+              containerPort: 6262
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resourcesControlServer | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

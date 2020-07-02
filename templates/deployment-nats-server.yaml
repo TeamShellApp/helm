@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "teamshell-nats-server.fullname" . }}
+  labels:
+    {{- include "teamshell-nats-server.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "teamshell-nats-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "teamshell-nats-server.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "teamshell-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-nats
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.imageNats.repository }}:{{ .Values.imageNats.tag | default `latest` }}"
+          imagePullPolicy: {{ .Values.imageNats.pullPolicy }}
+          env:
+            - name: SKIP_SSL_HOST_CHECK
+              value: {{ .Values.natsServer.skipSSLHostCheck | quote }}
+            - name: GRPC_SERVER
+              {{ if eq .Values.natsServer.grpcServer "" }}
+              value: {{ include "teamshell-server.fullname" . }}:{{ .Values.service.port }}
+              {{else}}
+              value: {{ .Values.natsServer.grpcServer }}
+              {{end}}
+            
+          ports:
+            - name: nats
+              containerPort: 7890
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resourcesControlServer | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

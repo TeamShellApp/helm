@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  labels:
+    app: migrate
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrate
+        image: "{{ .Values.imageMigrations.repository }}:{{ .Values.imageMigrations.tag | default `latest` }}"
+        imagePullPolicy: {{ .Values.imageMigrations.pullPolicy }}
+        command:
+          - "/opt/sql-migrate"
+          - "up"
+        env:
+        - name: DB_USER
+          value: {{ .Values.controlServer.pgUser }}
+        - name: DB_PASSWORD
+          value: {{ .Values.controlServer.pgPassword }}
+        - name: DB_HOST
+        {{ if eq .Values.controlServer.pgHost "" }}
+          value: {{ .Release.Name }}-{{ .Values.postgresql.nameOverride}}
+        {{else}}
+          value: {{ .Values.controlServer.pgHost }}
+        {{end}}
+        - name: DB_PORT
+          value: {{ .Values.controlServer.pgPort | quote }}
+        - name: DB_NAME
+          value: {{ .Values.controlServer.pgDatabase }}
+        - name: DB_SSL
+          value: {{ .Values.controlServer.pgSSL | default `disable` }}
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

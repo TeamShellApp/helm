@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "teamshell-storage-server.fullname" . }}
+  labels:
+    {{- include "teamshell-storage-server.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "teamshell-storage-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "teamshell-storage-server.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "teamshell-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-storage
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.imageStorage.repository }}:{{ .Values.imageStorage.tag | default `latest` }}"
+          imagePullPolicy: {{ .Values.imageStorage.pullPolicy }}
+          env:
+            - name: MONGO_ADDR
+              {{ if eq .Values.storageServer.mongoAddr "" }}
+              value: mongodb://teamshell:nhc7askmx@{{ .Release.Name }}-{{ .Values.mongodb.nameOverride}}/teamshell
+              {{else}}
+              value: mongodb://{{ .Values.storageServer.mongoAddr }}/teamshell
+              {{end}}
+            - name: GRPC_SERVER
+              {{ if eq .Values.storageServer.grpcServer "" }}
+              value: {{ include "teamshell-server.fullname" . }}:{{ .Values.service.port }}
+              {{else}}
+              value: {{ .Values.storageServer.grpcServer }}
+              {{end}}
+            - name: SHELL_SERVER
+              {{ if eq .Values.storageServer.natsServer "" }}
+              value: {{ include "teamshell-nats-server.fullname" . }}:{{ .Values.serviceNats.port }}
+              {{else}}
+              value: {{ .Values.storageServer.natsServer }}
+              {{end}}
+            - name: SKIP_SSL_HOST_CHECK
+              value: {{ .Values.storageServer.skipSSLHostCheck | quote }}
+            - name: FLUSH_BUFFER
+              value: {{ .Values.storageServer.flushBuffer | quote }}
+            - name: FLUSH_TIMEOUT
+              value: {{ .Values.storageServer.flushTimeout }}
+            - name: STORAGE_TOKEN
+              value: {{ .Values.controlServer.storageToken }}
+            
+          resources:
+            {{- toYaml .Values.resourcesControlServer | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

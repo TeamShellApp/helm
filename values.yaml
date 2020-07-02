@@ -1,0 +1,155 @@
+# Default values for teamshell-server.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+imageControlServer:
+  repository: gcr.io/coddy-256004/server
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
+
+imageMigrations:
+  repository: gcr.io/coddy-256004/sql-migrate
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
+
+imageNats:
+  repository: gcr.io/coddy-256004/shell_server
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
+
+imageStorage:
+  repository: gcr.io/coddy-256004/shell_storage
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
+
+imageEvents:
+  repository: gcr.io/coddy-256004/shell_events
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
+
+imageSSH:
+  repository: gcr.io/coddy-256004/ttui
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
+  
+
+imagePullSecrets: ["name": "gcr-json-key"]
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: NodePort
+  port: 6262
+  nodePort: 32320
+
+serviceNats:
+  type: NodePort
+  port: 7890
+  nodePort: 32321
+
+serviceSSH:
+  type: NodePort
+  port: 6543
+  nodePort: 32322
+  
+
+resourcesControlServer:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 2
+    # memory: 128Mi
+  requests:
+    cpu: 100m
+    # memory: 128Mi
+
+controlServer:
+  replicaCount: 1
+  pgUser: postgres
+  pgPassword: kusd6nzbfa
+  pgHost: ""
+  pgPort: 5432
+  pgDatabase: teamshell
+  pgSSL: ""
+  useCert: 1
+  enableRBAC: 1
+  storageToken: tknStorage
+  eventsToken: 30a94d28-825d-4ca8-a24d-2b9458929e5f
+  smtpHost: ""
+  smtpPort: 2587
+  smtpUser: ""
+  smtpPassword: ""
+  smtpFromEmail: ""
+  smtpFromName: ""
+  
+natsServer:
+  mongoAddr: ""
+  grpcServer: ""
+
+storageServer:
+  mongoAddr: ""
+  grpcServer: ""
+  natsServer: ""
+  flushBuffer: 1024
+  flushTimeout: "10s"
+
+eventsServer:
+  grpcServer: ""
+  natsServer: ""
+  token: 30a94d28-825d-4ca8-a24d-2b9458929e5f
+
+sshServer:
+  controlServer: ""
+  natsServer: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+postgresql:
+  enabled: true
+  nameOverride: teamshell-postgresql
+  postgresqlUsername: postgres
+  postgresqlDatabase: teamshell
+  postgresqlPassword: kusd6nzbfa
+
+mongodb:
+  enabled: true
+  nameOverride: teamshell-mongodb
+  mongodbRootPassword: lk6cns7zds3
+  mongodbUsername: teamshell
+  mongodbPassword: nhc7askmx
+  mongodbDatabase: teamshell
+  persistence.size: 30Gi

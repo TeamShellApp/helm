@@ -1,0 +1,11 @@
+Wait until all services in {{ .Release.Namespace }} namespace are in running state and connect via GUI or TTIU using these details:
+
+Control port {{ .Values.service.nodePort }}
+Session port {{ .Values.serviceNats.nodePort }}
+
+Connection host can be acquired by running:
+
+kubectl get nodes -o wide 
+
+Get EXTERNAL IP value
+

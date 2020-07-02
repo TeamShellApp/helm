@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "teamshell-events-server.fullname" . }}
+  labels:
+    {{- include "teamshell-events-server.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "teamshell-events-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "teamshell-events-server.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "teamshell-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-events
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.imageEvents.repository }}:{{ .Values.imageEvents.tag | default `latest` }}"
+          imagePullPolicy: {{ .Values.imageEvents.pullPolicy }}
+          command:
+            - /opt/shell_events
+            - {{ if eq .Values.eventsServer.natsServer "" }}{{ include "teamshell-nats-server.fullname" . }}:{{ .Values.serviceNats.port }}{{else}}{{ .Values.eventsServer.natsServer }}{{end}}
+          env:
+            - name: TOKEN
+              value: {{ .Values.eventsServer.token }}
+            - name: GRPC_SERVER
+              {{ if eq .Values.eventsServer.grpcServer "" }}
+              value: {{ include "teamshell-server.fullname" . }}:{{ .Values.service.port }}
+              {{else}}
+              value: {{ .Values.eventsServer.grpcServer }}
+              {{end}}
+            - name: SENTRY_DSN
+              value: {{ .Values.controlServer.sentryDSN }}
+            
+          resources:
+            {{- toYaml .Values.resourcesControlServer | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
