@@ -68,17 +68,17 @@ securityContext: {}
 service:
   type: NodePort
   port: 6262
-  nodePort: 32320
+  nodePort: 32220
 
 serviceNats:
   type: NodePort
   port: 7890
-  nodePort: 32321
+  nodePort: 32221
 
 serviceSSH:
   type: NodePort
   port: 6543
-  nodePort: 32322
+  nodePort: 32222
   
 
 resourcesControlServer:
