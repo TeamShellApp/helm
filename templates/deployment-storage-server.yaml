@@ -34,7 +34,7 @@ spec:
           env:
             - name: MONGO_ADDR
               {{ if eq .Values.storageServer.mongoAddr "" }}
-              value: mongodb://teamshell:nhc7askmx@{{ .Release.Name }}-{{ .Values.mongodb.nameOverride}}/teamshell
+              value: mongodb://{{ .Values.mongodb.mongodbUsername}}:{{ .Values.mongodb.mongodbPassword}}@{{ .Release.Name }}-{{ .Values.mongodb.nameOverride}}/{{ .Values.mongodb.mongodbDatabase}}
               {{else}}
               value: mongodb://{{ .Values.storageServer.mongoAddr }}/teamshell
               {{end}}
